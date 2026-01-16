@@ -1,7 +1,7 @@
 ---
 name: roku
 description: CLI interface to control Roku devices via python-roku.
-homepage: https://github.com/jcarbaugh/python-roku
+homepage: https://github.com/gumadeiras/roku-cli
 metadata: {"clawdbot":{"emoji":"📺","requires":{"bins":["roku"]},"install":[{"id":"python","kind":"pip","package":"roku","bins":["roku"],"label":"Install roku (pip)"}]}}
 ---
 
