@@ -5,7 +5,15 @@ import { Emulator } from "./emulator";
 import { RokuServer } from "./server";
 import { RokuProxy } from "./proxy";
 import { loadScript, parseScript, runScript } from "./scripting";
-import { startCommandServer } from "./cli/bridge";
+import {
+  bridgeServiceStatus,
+  controlBridgeService,
+  diagnoseBridgeService,
+  installBridgeService,
+  probeBridgeHealth,
+  startCommandServer,
+  uninstallBridgeService
+} from "./cli/bridge";
 import { runInteractive } from "./cli/interactive";
 import { printCommandHelpByParts, printUsage, TOP_LEVEL_COMMANDS } from "./cli/help";
 import {
@@ -74,15 +82,150 @@ async function main(parsedArgs: ParsedArgs): Promise<void> {
       return;
     }
     case "bridge": {
+      const action = parsedArgs.positionals[0];
+      if (action === "monitor") {
+        const port = toNumber(parsedArgs.options.port ?? parsedArgs.options.listen);
+        if (!port) throw new Error("Missing --port <port>");
+        const token = asString(parsedArgs.options.token);
+        if (!token) throw new Error("Missing --token <token>");
+        const listenHost = asString(parsedArgs.options["listen-host"]) ?? "127.0.0.1";
+        await monitorBridge(port, token, listenHost);
+        return;
+      }
+      if (action === "status") {
+        const info = bridgeServiceStatus(Boolean(parsedArgs.options.user));
+        process.stdout.write(`${info.status}\n`);
+        if (info.pid) {
+          process.stdout.write(`pid: ${info.pid}\n`);
+        }
+        if (info.startedAt) {
+          process.stdout.write(`started: ${info.startedAt}\n`);
+        }
+        if (info.logs && info.logs.length) {
+          process.stdout.write("logs:\n");
+          for (const line of info.logs) {
+            process.stdout.write(`  ${line}\n`);
+          }
+        }
+        const port = toNumber(parsedArgs.options.port ?? parsedArgs.options.listen);
+        const token = asString(parsedArgs.options.token);
+        if (port && token) {
+          const listenHost = asString(parsedArgs.options["listen-host"]) ?? "127.0.0.1";
+          const probe = await probeBridgeHealth(port, token, listenHost);
+          if (probe.ok) {
+            process.stdout.write(`health: ok (${probe.latencyMs ?? 0}ms)\n`);
+          } else if (probe.error) {
+            process.stdout.write(`health: error (${probe.latencyMs ?? 0}ms) ${probe.error}\n`);
+          } else {
+            process.stdout.write(`health: ${probe.status ?? "error"} (${probe.latencyMs ?? 0}ms)\n`);
+          }
+        }
+        return;
+      }
+      if (action === "install-service") {
+        const hostInput = resolveHostInput(options.host, options.alias);
+        if (!hostInput) throw new Error("Missing --host or --alias");
+        const parsed = parseHostInput(hostInput);
+        const port = toNumber(parsedArgs.options.port ?? parsedArgs.options.listen, 19839);
+        if (!port) throw new Error("Missing --port <port>");
+        const token = asString(parsedArgs.options.token);
+        if (!token) throw new Error("Missing --token <token>");
+        const listenHost = asString(parsedArgs.options["listen-host"]) ?? "127.0.0.1";
+        const userService = Boolean(parsedArgs.options.user);
+        try {
+          const path = await installBridgeService({
+            host: parsed.host,
+            port,
+            token,
+            listenHost,
+            userService
+          });
+          process.stdout.write(`Service file created at ${path}\n`);
+        } catch (error) {
+          const err = error as NodeJS.ErrnoException;
+          if (err.code === "EACCES") {
+            throw new Error("Permission denied. Try running with sudo.");
+          }
+          throw error;
+        }
+        return;
+      }
+      if (action === "start" || action === "stop" || action === "restart") {
+        const hostInput = resolveHostInput(options.host, options.alias);
+        const port = toNumber(parsedArgs.options.port ?? parsedArgs.options.listen);
+        const token = asString(parsedArgs.options.token);
+        const listenHost = asString(parsedArgs.options["listen-host"]) ?? "127.0.0.1";
+        const userService = Boolean(parsedArgs.options.user);
+        if (action !== "stop") {
+          if (!hostInput) throw new Error("Missing --host or --alias");
+          if (!port) throw new Error("Missing --port <port>");
+          if (!token) throw new Error("Missing --token <token>");
+          const parsed = parseHostInput(hostInput);
+          try {
+            await installBridgeService({
+              host: parsed.host,
+              port,
+              token,
+              listenHost,
+              userService
+            });
+          } catch (error) {
+            const err = error as NodeJS.ErrnoException;
+            if (err.code === "EACCES") {
+              throw new Error("Permission denied. Try running with sudo.");
+            }
+            throw error;
+          }
+        }
+        try {
+          controlBridgeService(action, userService);
+        } catch (error) {
+          const err = error as NodeJS.ErrnoException;
+          if (err.code === "EACCES") {
+            throw new Error("Permission denied. Try running with sudo.");
+          }
+          throw error;
+        }
+        return;
+      }
+      if (action === "uninstall") {
+        const userService = Boolean(parsedArgs.options.user);
+        await uninstallBridgeService(userService);
+        process.stdout.write("Uninstalled bridge service.\n");
+        return;
+      }
+      if (action === "diagnose") {
+        const userService = Boolean(parsedArgs.options.user);
+        const lines = await diagnoseBridgeService(userService);
+        for (const line of lines) {
+          process.stdout.write(`${line}\n`);
+        }
+        return;
+      }
       const roku = buildRoku(options);
       const listenPort = toNumber(parsedArgs.options.listen, 19839);
       if (!listenPort) throw new Error("Missing --listen <port>");
       const token = asString(parsedArgs.options.token);
-      const server = await startCommandServer(roku, { port: listenPort, token });
-      process.stdout.write(`Bridge listening on 127.0.0.1:${server.port}\n`);
-      await new Promise<void>(() => {
-        // keep process alive
-      });
+      const listenHost = asString(parsedArgs.options["listen-host"]) ?? "127.0.0.1";
+      try {
+        const server = await startCommandServer(roku, {
+          port: listenPort,
+          host: listenHost,
+          token
+        });
+        process.stdout.write(`Bridge listening on ${listenHost}:${server.port}\n`);
+        await new Promise<void>(() => {
+          // keep process alive
+        });
+      } catch (error) {
+        const err = error as NodeJS.ErrnoException;
+        if (err.code === "EADDRINUSE") {
+          throw new Error(
+            `Port ${listenPort} is already in use. Choose a different port or stop the existing bridge.`
+          );
+        }
+        throw error;
+      }
       return;
     }
     case "discover": {
@@ -447,4 +590,78 @@ function printResult(options: GlobalOptions, result: unknown): void {
     return;
   }
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+}
+
+async function monitorBridge(
+  port: number,
+  token: string | undefined,
+  host: string
+): Promise<void> {
+  const intervalMs = 2000;
+  process.stdout.write(`Monitoring bridge on ${host}:${port}\n`);
+  process.stdout.write("Press Ctrl+C to stop.\n");
+
+  let lastEventId = 0;
+
+  const poll = async () => {
+    const start = Date.now();
+    try {
+      const res = await fetch(`http://${host}:${port}/health?deep=1`, {
+        headers: buildTokenHeaders(token)
+      });
+      const latency = Date.now() - start;
+      if (!res.ok) {
+        process.stdout.write(`[down] ${res.status} (${latency}ms)\n`);
+      } else if (latency > 75) {
+        process.stdout.write(`[slow] ${latency}ms\n`);
+      }
+      await reportBridgeEvents(host, port, token, (eventId) => {
+        lastEventId = eventId;
+      }, lastEventId);
+    } catch (error) {
+      process.stdout.write(`[down] ${(error as Error).message}\n`);
+    }
+  };
+
+  const timer = setInterval(() => {
+    void poll();
+  }, intervalMs);
+  await poll();
+
+  process.on("SIGINT", () => {
+    clearInterval(timer);
+    process.stdout.write("Stopped monitoring.\n");
+    process.exit(0);
+  });
+}
+
+function buildTokenHeaders(token?: string): Record<string, string> | undefined {
+  if (!token) return undefined;
+  return { Authorization: `Bearer ${token}` };
+}
+
+async function reportBridgeEvents(
+  host: string,
+  port: number,
+  token: string | undefined,
+  update: (eventId: number) => void,
+  lastSeenId: number
+): Promise<void> {
+  try {
+    const res = await fetch(`http://${host}:${port}/stats`, {
+      headers: buildTokenHeaders(token)
+    });
+    if (!res.ok) return;
+    const data = (await res.json()) as {
+      ok: boolean;
+      stats?: { lastEvent?: { id: number; status: string; path: string; detail?: any } };
+    };
+    const event = data.stats?.lastEvent;
+    if (!event || event.id <= lastSeenId) return;
+    const detail = event.detail ? ` ${JSON.stringify(event.detail)}` : "";
+    process.stdout.write(`[event] ${event.status} ${event.path}${detail}\n`);
+    update(event.id);
+  } catch {
+    // ignore stats errors
+  }
 }

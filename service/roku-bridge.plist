@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.rokutscli.bridge</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/usr/local/bin/roku</string>
+      <string>--host</string>
+      <string>YOUR_HOST_OR_ALIAS</string>
+      <string>bridge</string>
+      <string>--listen</string>
+      <string>19839</string>
+      <string>--token</string>
+      <string>YOUR_TOKEN</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/rokutscli-bridge.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/rokutscli-bridge.err.log</string>
+  </dict>
+</plist>

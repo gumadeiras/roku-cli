@@ -158,10 +158,73 @@ export const COMMAND_HELP: Record<string, HelpEntry> = {
     examples: ["roku proxy --remote-host 192.168.1.10 --local-port 8060"]
   },
   bridge: {
-    usage: "roku --host <host|alias> bridge --listen <port> [--token <token>]",
+    usage:
+      "roku --host <host|alias> bridge --listen <port> [--listen-host <host>] [--token <token>]\n  roku bridge install-service --port <port> --token <token> --host <host|alias> [--listen-host <host>] [--user]\n  roku bridge start --port <port> --token <token> --host <host|alias> [--listen-host <host>] [--user]\n  roku bridge stop [--user]\n  roku bridge restart --port <port> --token <token> --host <host|alias> [--listen-host <host>] [--user]\n  roku bridge status [--user] [--port <port> --token <token> [--listen-host <host>]]\n  roku bridge uninstall [--user]\n  roku bridge diagnose [--user]\n  roku bridge monitor --port <port> --token <token> [--listen-host <host>]",
     description:
-      "Start a local HTTP bridge so other apps can control your Roku.",
-    examples: ["roku --host projector bridge --listen 19839 --token secret"]
+      "Start a local HTTP bridge or monitor an existing bridge (health + latency + last event).",
+    examples: [
+      "roku --host projector bridge --listen 19839 --token secret",
+      "roku bridge install-service --port 19839 --token secret --host projector --user",
+      "roku bridge start --port 19839 --token secret --host projector --user",
+      "roku bridge stop",
+      "roku bridge restart --port 19839 --token secret --host projector --user",
+      "roku bridge status --user",
+      "roku bridge status --port 19839 --token secret",
+      "roku bridge uninstall --user",
+      "roku bridge diagnose --user",
+      "roku bridge monitor --port 19839 --token secret"
+    ]
+  },
+  "bridge monitor": {
+    usage: "roku bridge monitor --port <port> --token <token> [--listen-host <host>]",
+    description:
+      "Monitor a running bridge with periodic health checks and last-event reporting.",
+    examples: ["roku bridge monitor --port 19839 --token secret"]
+  },
+  "bridge install-service": {
+    usage:
+      "roku bridge install-service --port <port> --token <token> --host <host|alias> [--listen-host <host>] [--user]",
+    description: "Install a system or user service for the bridge.",
+    examples: [
+      "roku bridge install-service --port 19839 --token secret --host projector --user"
+    ]
+  },
+  "bridge start": {
+    usage:
+      "roku bridge start --port <port> --token <token> --host <host|alias> [--listen-host <host>] [--user]",
+    description: "Start the installed bridge service.",
+    examples: ["roku bridge start --port 19839 --token secret --host projector --user"]
+  },
+  "bridge stop": {
+    usage: "roku bridge stop [--user]",
+    description: "Stop the installed bridge service.",
+    examples: ["roku bridge stop"]
+  },
+  "bridge restart": {
+    usage:
+      "roku bridge restart --port <port> --token <token> --host <host|alias> [--listen-host <host>] [--user]",
+    description: "Restart the installed bridge service.",
+    examples: ["roku bridge restart --port 19839 --token secret --host projector --user"]
+  },
+  "bridge status": {
+    usage: "roku bridge status [--user] [--port <port> --token <token> [--listen-host <host>]]",
+    description:
+      "Show service status, PID, recent log lines, and optional health probe when port/token are provided.",
+    examples: [
+      "roku bridge status --user",
+      "roku bridge status --port 19839 --token pinguini"
+    ]
+  },
+  "bridge uninstall": {
+    usage: "roku bridge uninstall [--user]",
+    description: "Remove installed service files and stop the service if running.",
+    examples: ["roku bridge uninstall --user"]
+  },
+  "bridge diagnose": {
+    usage: "roku bridge diagnose [--user]",
+    description:
+      "Print service paths, resolved binaries, status output, and recent logs for troubleshooting.",
+    examples: ["roku bridge diagnose --user"]
   }
 };
 

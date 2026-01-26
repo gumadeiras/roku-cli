@@ -83,6 +83,32 @@ Endpoints:
 - `POST /search` `{ "title": "Stargate" }`
 - `POST /launch` `{ "app": "plex" }`
 - `GET /health`
+- `GET /stats`
+
+## Run Bridge as a Service
+You can run the bridge in the background using your OS service manager.
+
+### macOS + Linux (user service)
+Install and manage the service entirely through the CLI (no manual plist/unit edits needed):
+```bash
+# Install service file
+roku bridge install-service --port 19839 --token YOUR_TOKEN --host YOUR_HOST_OR_ALIAS --user
+
+# Start/stop/restart
+roku bridge start --port 19839 --token YOUR_TOKEN --host YOUR_HOST_OR_ALIAS --user
+roku bridge stop --user
+roku bridge restart --port 19839 --token YOUR_TOKEN --host YOUR_HOST_OR_ALIAS --user
+
+# Status + logs (+ optional health probe if port/token provided)
+roku bridge status --user
+roku bridge status --port 19839 --token YOUR_TOKEN
+
+# Diagnose service issues (shows paths + logs, token redacted)
+roku bridge diagnose --user
+
+# Uninstall
+roku bridge uninstall --user
+```
 
 ## Emulator & Proxy
 ```bash

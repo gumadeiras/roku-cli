@@ -1,0 +1,14 @@
+[Unit]
+Description=Roku TS CLI Bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/roku --host YOUR_HOST_OR_ALIAS bridge --listen 19839 --token YOUR_TOKEN
+Restart=always
+RestartSec=2
+StandardOutput=append:/var/log/rokutscli-bridge.log
+StandardError=append:/var/log/rokutscli-bridge.log
+
+[Install]
+WantedBy=multi-user.target
