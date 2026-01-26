@@ -1,6 +1,6 @@
 {
   "name": "roku-ts-cli",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Fast TypeScript CLI and library for controlling Roku devices via the ECP API.",
   "homepage": "https://github.com/gumadeiras/roku-cli",
   "repository": {
