@@ -1,115 +1,112 @@
-# roku-cli
+# Roku CLI
 
-A pure Bash CLI to control your Roku from the terminal. Built on [python-roku](https://github.com/jcarbaugh/python-roku).
+Fast TypeScript CLI and library for controlling Roku devices via the ECP API.
 
-## Features
-
-- 🔍 **Discover** Roku devices on your network
-- 🎮 **Control** playback and navigation
-- ⌨️ **Text entry** for search fields
-- 📱 **Launch** apps by name or ID
-- 📊 **Status** monitoring (active app, device info)
+## Highlights
+- Full ECP control (keys, text, search, apps, device info, media state).
+- Interactive mode for remote-like control from the terminal.
+- Local bridge mode for other apps to send commands over HTTP.
+- SSDP discovery, emulator server, and proxy tools.
+- Strong typing, retries, timeouts, and better error handling.
 
 ## Requirements
+- Node 18+ (Node 20+ recommended)
 
-- Python 3.7+
-- `pip3 install roku`
-- Bash 4+
-
-## Installation
-
+## Install (recommended)
 ```bash
-# Install the python-roku library
-pip3 install roku
-
-# Download and link the CLI
-git clone https://github.com/gumadeiras/roku-cli.git
-cd roku-cli
-chmod +x roku-cli
-ln -sf $(pwd)/roku-cli ~/.local/bin/roku
+npm install -g roku-ts-cli@latest
 ```
 
-Or install via [ClawdHub](https://clawdhub.com):
-
 ```bash
-clawdhub install roku
+# or install locally for development
+npm install
+npm run build
+npm link
 ```
 
 ## Quick Start
-
-Find your Roku:
 ```bash
-roku discover
+# Discover devices and save an alias
+roku discover --save livingroom --index 1
+
+# Use the alias
+roku --host livingroom device-info
+roku --host livingroom apps
 ```
 
-Control it:
+## CLI Usage
 ```bash
-roku press home        # Go to home screen
-roku press select      # OK button
-roku press right
-roku press play
-roku press back
+# Direct host (fast, no SSDP)
+roku 192.168.1.118
+
+# Commands
+roku --host livingroom command home
+roku --host livingroom literal "hello"
+roku --host livingroom search --title "Stargate"
+
+# App lookup / aliases
+roku --host livingroom search --app plex
+roku alias set plex 13535
+roku --host livingroom launch plex
 ```
 
-Enter text (e.g., in search):
+## Interactive Mode
 ```bash
-roku text "netflix"
+# Interactive control
+roku livingroom
+
+# With local command port
+roku --host livingroom interactive --listen 19839 --token secret
 ```
 
-Launch apps:
+## Bridge Mode (Local HTTP)
 ```bash
-roku apps              # List all apps
-roku launch Netflix    # By name
-roku launch 12         # By app ID
+roku --host livingroom bridge --listen 19839 --token secret
 ```
 
-Check status:
+Send commands from other apps:
 ```bash
-roku active            # Current app
-roku info              # Device info
+curl -X POST http://127.0.0.1:19839/key \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer secret" \
+  -d '{"key":"home"}'
+
+curl -X POST http://127.0.0.1:19839/text \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer secret" \
+  -d '{"text":"hello"}'
 ```
 
-## Usage
+Endpoints:
+- `POST /key` `{ "key": "home" }`
+- `POST /text` `{ "text": "hello" }`
+- `POST /search` `{ "title": "Stargate" }`
+- `POST /launch` `{ "app": "plex" }`
+- `GET /health`
 
-```
-Usage: roku [OPTIONS] COMMAND [ARGS]
-
-Options:
-  --ip IP       Roku IP address (or set ROKU_IP env var)
-  --help        Show this help
-
-Commands:
-  discover      Find Roku devices on network
-  press BUTTON  Send button press
-  text STRING   Enter text
-  apps          List installed apps
-  launch APP    Launch app (name or ID)
-  active        Show active app
-  info          Show device info
-```
-
-## Buttons
-
-`home`, `back`, `left`, `right`, `up`, `down`, `select`, `enter`, `info`, `play`, `forward`, `reverse`, `replay`, `search`, `backspace`, `channel_up`, `channel_down`
-
-## Environment
-
-Set `ROKU_IP` to avoid specifying `--ip` each time:
-
+## Emulator & Proxy
 ```bash
-export ROKU_IP="192.168.1.100"
+# Local emulator (HTTP + SSDP)
+roku server --port 8060
+
+# Forward requests to a real Roku
+roku proxy --remote-host 192.168.1.10 --local-port 8061
 ```
 
-## Roku Settings
+## Library Usage
+```ts
+import { Roku } from "roku-ts-cli";
 
-For external control to work, enable on your Roku:
+const roku = new Roku("192.168.1.10");
+const apps = await roku.getApps();
+await roku.home();
+```
 
-**Settings → System → Advanced System Settings → Control by Mobile Apps → Enable**
+## Tests
+```bash
+npm run build
+npm test
+```
 
 ## License
-
 MIT
-
----
-
-Built with ❤️ using [python-roku](https://github.com/jcarbaugh/python-roku)

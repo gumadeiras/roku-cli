@@ -1,0 +1,27 @@
+{
+  "name": "roku-ts-cli",
+  "version": "1.0.0",
+  "description": "TypeScript Roku ECP client and CLI.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "roku": "bin/roku.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "test": "node --test dist/tests/*.test.js"
+  },
+  "keywords": [
+    "roku",
+    "ecp",
+    "cli",
+    "typescript"
+  ],
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.3"
+  }
+}
