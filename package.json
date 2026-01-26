@@ -2,10 +2,10 @@
   "name": "roku-ts-cli",
   "version": "1.0.2",
   "description": "TypeScript Roku ECP client and CLI.",
-  "homepage": "https://github.com/gumadeiras/roku-ts-cli",
+  "homepage": "https://github.com/gumadeiras/roku-cli",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gumadeiras/roku-ts-cli.git"
+    "url": "git+https://github.com/gumadeiras/roku-cli.git"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
