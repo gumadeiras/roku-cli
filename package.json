@@ -5,7 +5,7 @@
   "homepage": "https://github.com/gumadeiras/roku-ts-cli",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gumadeiras/roku-ts-cli.git"
+    "url": "git+https://github.com/gumadeiras/roku-ts-cli.git"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
