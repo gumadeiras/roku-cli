@@ -1,6 +1,6 @@
 {
   "name": "roku-ts-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "TypeScript Roku ECP client and CLI.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
