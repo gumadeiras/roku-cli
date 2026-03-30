@@ -7,15 +7,26 @@
     "type": "git",
     "url": "git+https://github.com/gumadeiras/roku-cli.git"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "bin": {
     "roku": "bin/roku.js"
   },
+  "files": [
+    "bin/roku.js",
+    "dist/src",
+    "service/roku-bridge.plist",
+    "service/roku-bridge.service",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "prepare": "npm run build",
-    "test": "node --test dist/tests/*.test.js"
+    "test": "npm run build && node --test dist/tests/*.test.js",
+    "release:check": "node ./scripts/release-check.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "keywords": [
     "roku",

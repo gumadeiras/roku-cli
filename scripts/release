@@ -1,0 +1,199 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DEFAULT_REMOTE="${ROKU_RELEASE_REMOTE:-origin}"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./scripts/release check <version>
+  ./scripts/release bump <version>
+  ./scripts/release package <version>
+  ./scripts/release publish <version> [--tag <tag>] [--dry-run]
+  ./scripts/release run <version> [--tag <tag>] [--dry-run]
+
+Commands:
+  check     Validate synced versions, tests, build output, and npm pack contents.
+  bump      Update version files only.
+  package   Build and package release artifacts locally.
+  publish   Publish the packaged tarball to npm.
+  run       Bump, test, package, commit, tag, push, and publish.
+EOF
+}
+
+die() {
+  echo "error: $*" >&2
+  exit 1
+}
+
+require_tool() {
+  command -v "$1" >/dev/null 2>&1 || die "missing required tool: $1"
+}
+
+require_clean_tree() {
+  local status
+  status="$(git -C "$ROOT_DIR" status --short)"
+  if [[ -n "$status" ]]; then
+    echo "$status" >&2
+    die "working tree must be clean"
+  fi
+}
+
+package_filename() {
+  cd "$ROOT_DIR"
+  node -p 'const pkg=require("./package.json"); `${pkg.name.replace(/^@/, "").replace(/\//g, "-")}-${pkg.version}.tgz`'
+}
+
+bump_version() {
+  "$ROOT_DIR/scripts/sync-version.sh" "$1"
+}
+
+run_checks() {
+  local version="$1"
+
+  "$ROOT_DIR/scripts/sync-version.sh" --check "$version"
+
+  (
+    cd "$ROOT_DIR"
+    npm test
+    npm run release:check
+  )
+}
+
+package_release() {
+  (
+    cd "$ROOT_DIR"
+    "$ROOT_DIR/scripts/package-release.sh" --skip-build
+  )
+}
+
+commit_tag_and_push() {
+  local version="$1"
+  local tag="v$version"
+
+  (
+    cd "$ROOT_DIR"
+    git add package.json package-lock.json
+    git commit -m "Bump version to $version"
+    git tag "$tag"
+    git push "$DEFAULT_REMOTE" HEAD
+    git push "$DEFAULT_REMOTE" "$tag"
+  )
+}
+
+publish_release() {
+  local version="$1"
+  local publish_tag="$2"
+  local dry_run="$3"
+
+  "$ROOT_DIR/scripts/sync-version.sh" --check "$version"
+
+  local package_file
+  package_file="$(package_filename)"
+  local package_path="$ROOT_DIR/dist/release/$package_file"
+
+  [[ -f "$package_path" ]] || die "missing packaged artifact: $package_path"
+
+  require_tool npm
+  (
+    cd "$ROOT_DIR"
+    npm whoami >/dev/null
+  )
+
+  local npm_args=(publish "$package_path" --access public --tag "$publish_tag")
+  if (( dry_run )); then
+    npm_args+=(--dry-run)
+  fi
+
+  (
+    cd "$ROOT_DIR"
+    npm "${npm_args[@]}"
+  )
+
+  if (( dry_run )); then
+    echo "Dry-run publish completed for $package_file with tag $publish_tag."
+  else
+    echo "Published $package_file with tag $publish_tag."
+  fi
+}
+
+MODE="${1:-}"
+[[ -n "$MODE" ]] || {
+  usage >&2
+  exit 2
+}
+shift
+
+VERSION=""
+PUBLISH_TAG="latest"
+DRY_RUN=0
+
+parse_publish_flags() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --tag)
+        [[ $# -ge 2 ]] || die "missing value for --tag"
+        PUBLISH_TAG="$2"
+        shift 2
+        ;;
+      --dry-run)
+        DRY_RUN=1
+        shift
+        ;;
+      *)
+        die "unknown argument: $1"
+        ;;
+    esac
+  done
+}
+
+case "$MODE" in
+  check | bump | package)
+    [[ $# -eq 1 ]] || {
+      usage >&2
+      exit 2
+    }
+    VERSION="$1"
+    ;;
+  publish | run)
+    [[ $# -ge 1 ]] || {
+      usage >&2
+      exit 2
+    }
+    VERSION="$1"
+    shift
+    parse_publish_flags "$@"
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
+
+case "$MODE" in
+  check)
+    run_checks "$VERSION"
+    ;;
+  bump)
+    require_clean_tree
+    bump_version "$VERSION"
+    ;;
+  package)
+    run_checks "$VERSION"
+    package_release
+    ;;
+  publish)
+    publish_release "$VERSION" "$PUBLISH_TAG" "$DRY_RUN"
+    ;;
+  run)
+    require_clean_tree
+    require_tool git
+    bump_version "$VERSION"
+    run_checks "$VERSION"
+    package_release
+    commit_tag_and_push "$VERSION"
+    publish_release "$VERSION" "$PUBLISH_TAG" "$DRY_RUN"
+    ;;
+esac

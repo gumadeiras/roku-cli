@@ -4,8 +4,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { execSync } = require("node:child_process");
 
+const rootPath = path.join(__dirname, "..");
 const cliPath = path.join(__dirname, "..", "dist", "src", "cli.js");
-const srcPath = path.join(__dirname, "..", "src");
+const srcPath = path.join(rootPath, "src");
+const tsconfigPath = path.join(rootPath, "tsconfig.json");
 
 function newestMtime(dirPath) {
   let newest = 0;
@@ -24,14 +26,21 @@ function newestMtime(dirPath) {
 }
 
 function shouldBuild() {
-  if (!fs.existsSync(cliPath)) return true;
+  const hasDevelopmentSources = fs.existsSync(srcPath) && fs.existsSync(tsconfigPath);
+  if (!fs.existsSync(cliPath)) return hasDevelopmentSources;
+  if (!hasDevelopmentSources) return false;
   const distStat = fs.statSync(cliPath);
   const newestSrc = newestMtime(srcPath);
   return newestSrc > distStat.mtimeMs;
 }
 
 if (shouldBuild()) {
-  execSync("npm run build", { stdio: "inherit", cwd: path.join(__dirname, "..") });
+  execSync("npm run build", { stdio: "inherit", cwd: rootPath });
+}
+
+if (!fs.existsSync(cliPath)) {
+  process.stderr.write(`Missing built CLI entrypoint at ${cliPath}\n`);
+  process.exit(1);
 }
 
 require(cliPath);

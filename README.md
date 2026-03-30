@@ -130,9 +130,25 @@ await roku.home();
 
 ## Tests
 ```bash
-npm run build
 npm test
 ```
+
+## Maintainer Scripts
+```bash
+# commit only selected paths
+./scripts/committer "fix: tighten packaging" package.json README.md
+
+# validate a release version
+./scripts/release check 1.1.3
+
+# build the npm tarball + checksums
+./scripts/release package 1.1.3
+
+# full release flow
+./scripts/release run 1.1.3
+```
+
+`./scripts/release publish` publishes the tarball from `dist/release/` to npm. Add `--dry-run` to rehearse the publish step without shipping.
 
 ## License
 MIT
