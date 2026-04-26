@@ -14,11 +14,16 @@ Fast TypeScript CLI and library for controlling Roku devices via the ECP API.
 
 ## Install (recommended)
 ```bash
+brew tap gumadeiras/tap
+brew install roku-cli
+```
+
+```bash
 npm install -g roku-ts-cli@latest
 ```
 
 ```bash
-# or install locally for development
+# local development
 npm install
 npm run build
 npm link
