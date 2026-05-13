@@ -17,7 +17,8 @@
     "dist/src",
     "service/roku-bridge.plist",
     "service/roku-bridge.service",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
