@@ -153,7 +153,12 @@ npm test
 ./scripts/release run 1.1.3
 ```
 
-`./scripts/release publish` publishes the tarball from `dist/release/` to npm. Add `--dry-run` to rehearse the publish step without shipping.
+Tag pushes run the GitHub release workflow, publish a package tarball as a
+release asset, publish npm, and update `gumadeiras/homebrew-tap`.
+`./scripts/release publish` publishes the tarball from `dist/release/` to npm.
+Add `--dry-run` to rehearse the npm publish step without shipping.
+
+Release CI publishes to npm with trusted publishing.
 
 ## License
 MIT

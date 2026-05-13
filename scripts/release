@@ -19,7 +19,7 @@ Commands:
   bump      Update version files only.
   package   Build and package release artifacts locally.
   publish   Publish the packaged tarball to npm.
-  run       Bump, test, package, commit, tag, push, and publish.
+  run       Bump, test, package, commit, tag, push, and wait for release CI.
 EOF
 }
 
@@ -80,6 +80,32 @@ commit_tag_and_push() {
     git tag "$tag"
     git push "$DEFAULT_REMOTE" HEAD
     git push "$DEFAULT_REMOTE" "$tag"
+  )
+}
+
+wait_for_release_run() {
+  local tag="$1"
+  local run_id=""
+
+  for _ in {1..20}; do
+    run_id="$(cd "$ROOT_DIR" && gh run list \
+      --workflow release.yml \
+      --branch "$tag" \
+      --event push \
+      --json databaseId \
+      --jq '.[0].databaseId // empty' \
+      --limit 1)"
+    if [[ -n "$run_id" ]]; then
+      break
+    fi
+    sleep 3
+  done
+
+  [[ -n "$run_id" ]] || die "could not find GitHub Actions release run for $tag"
+
+  (
+    cd "$ROOT_DIR"
+    gh run watch "$run_id" --exit-status
   )
 }
 
@@ -190,10 +216,11 @@ case "$MODE" in
   run)
     require_clean_tree
     require_tool git
+    require_tool gh
     bump_version "$VERSION"
     run_checks "$VERSION"
     package_release
     commit_tag_and_push "$VERSION"
-    publish_release "$VERSION" "$PUBLISH_TAG" "$DRY_RUN"
+    wait_for_release_run "v$VERSION"
     ;;
 esac
