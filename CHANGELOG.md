@@ -9,6 +9,7 @@
 
 ### Changes
 
+- Renamed the published npm package to `@gumadeiras/roku` and the Homebrew package to `roku`.
 - Documented the local release wrapper in the repo agent guide.
 
 ## 1.1.3 - 2026-01-26

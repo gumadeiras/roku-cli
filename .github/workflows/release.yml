@@ -56,6 +56,7 @@ jobs:
 
       - name: Derive package file
         run: |
+          # shellcheck disable=SC2016
           package_file="$(node -p 'const pkg=require("./package.json"); `${pkg.name.replace(/^@/, "").replace(/\//g, "-")}-${process.env.ROKU_RELEASE_VERSION}.tgz`')"
           test -f "dist/release/${package_file}"
           echo "ROKU_PACKAGE_FILE=$package_file" >> "$GITHUB_ENV"
@@ -119,20 +120,20 @@ jobs:
           fi
 
           python homebrew-tap/scripts/update_formula.py \
-            --formula homebrew-tap/Formula/roku-cli.rb \
+            --formula homebrew-tap/Formula/roku.rb \
             --url "https://github.com/gumadeiras/roku-cli/releases/download/v${ROKU_RELEASE_VERSION}/${ROKU_PACKAGE_FILE}" \
             --sha256 "$sha256"
 
       - name: Commit and push formula
         working-directory: homebrew-tap
         run: |
-          if git diff --quiet -- Formula/roku-cli.rb; then
-            echo "Formula/roku-cli.rb already up to date"
+          if git diff --quiet -- Formula/roku.rb; then
+            echo "Formula/roku.rb already up to date"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Formula/roku-cli.rb
-          git commit -m "Update roku-cli to ${ROKU_RELEASE_VERSION}"
+          git add Formula/roku.rb
+          git commit -m "Update roku to ${ROKU_RELEASE_VERSION}"
           git push

@@ -65,8 +65,8 @@ function collectMetadataErrors(pkg) {
     typeof pkg.repository === "string" ? pkg.repository : pkg.repository?.url,
   );
 
-  if (pkg.name !== "roku-ts-cli") {
-    errors.push(`package.json name must be "roku-ts-cli"; found "${pkg.name ?? ""}".`);
+  if (pkg.name !== "@gumadeiras/roku") {
+    errors.push(`package.json name must be "@gumadeiras/roku"; found "${pkg.name ?? ""}".`);
   }
   if (!pkg.description?.trim()) {
     errors.push("package.json description must be non-empty.");

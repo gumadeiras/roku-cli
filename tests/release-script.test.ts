@@ -26,19 +26,19 @@ function createReleaseRepo() {
 
   writeFileSync(
     path.join(repo, "package.json"),
-    `${JSON.stringify({ name: "roku-ts-cli", version: "1.1.3" }, null, 2)}\n`,
+    `${JSON.stringify({ name: "@gumadeiras/roku", version: "1.1.3" }, null, 2)}\n`,
   );
   writeFileSync(
     path.join(repo, "package-lock.json"),
     `${JSON.stringify(
       {
-        name: "roku-ts-cli",
+        name: "@gumadeiras/roku",
         version: "1.1.3",
         lockfileVersion: 3,
         requires: true,
         packages: {
           "": {
-            name: "roku-ts-cli",
+            name: "@gumadeiras/roku",
             version: "1.1.3",
           },
         },
@@ -47,7 +47,7 @@ function createReleaseRepo() {
       2,
     )}\n`,
   );
-  writeFileSync(path.join(repo, "dist", "release", "roku-ts-cli-1.1.3.tgz"), "fake tgz\n");
+  writeFileSync(path.join(repo, "dist", "release", "gumadeiras-roku-1.1.3.tgz"), "fake tgz\n");
   writeFileSync(
     path.join(repo, "fake-bin", "npm"),
     [
@@ -105,11 +105,11 @@ describe("scripts/release", () => {
   it("publishes the tarball matching the requested version", () => {
     const repo = createReleaseRepo();
     const fakeNpmLog = path.join(repo, "fake-npm.log");
-    const expectedTarball = path.join(repo, "dist", "release", "roku-ts-cli-1.1.3.tgz");
+    const expectedTarball = path.join(repo, "dist", "release", "gumadeiras-roku-1.1.3.tgz");
     const result = runRelease(repo, "publish", "1.1.3", "--dry-run");
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /Dry-run publish completed for roku-ts-cli-1\.1\.3\.tgz/);
+    assert.match(result.stdout, /Dry-run publish completed for gumadeiras-roku-1\.1\.3\.tgz/);
 
     const npmCalls = readFileSync(fakeNpmLog, "utf8").trim().split("\n").filter(Boolean);
     assert.deepEqual(npmCalls, [

@@ -1,5 +1,5 @@
 {
-  "name": "roku-ts-cli",
+  "name": "@gumadeiras/roku",
   "version": "1.1.4",
   "description": "CLI and library for controlling Roku devices.",
   "homepage": "https://github.com/gumadeiras/roku-cli",
