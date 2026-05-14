@@ -7,6 +7,10 @@
 - Fixed release publishing to use the stable GitHub Actions Node toolchain.
 - Added release package install smoke coverage.
 
+### Changes
+
+- Documented the local release wrapper in the repo agent guide.
+
 ## 1.1.3 - 2026-01-26
 
 ### Changes
