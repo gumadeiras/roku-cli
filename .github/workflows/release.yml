@@ -18,22 +18,19 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22
-          cache: npm
+          node-version: 24
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false
 
       - name: Derive release version
         run: |
           version="${GITHUB_REF_NAME#v}"
           echo "ROKU_RELEASE_VERSION=$version" >> "$GITHUB_ENV"
-
-      - name: Update npm
-        run: npm install -g npm@latest
 
       - name: Check tap token
         run: |
@@ -104,10 +101,10 @@ jobs:
             exit 0
           fi
 
-          npm publish "dist/release/${ROKU_PACKAGE_FILE}" --access public --provenance
+          npm publish "dist/release/${ROKU_PACKAGE_FILE}" --access public
 
       - name: Check out Homebrew tap
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: gumadeiras/homebrew-tap
           token: ${{ env.TAP_TOKEN }}

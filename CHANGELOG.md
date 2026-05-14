@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Fixes
+
+- Fixed release publishing to use the stable GitHub Actions Node toolchain.
+- Added release package install smoke coverage.
+
 ## 1.1.3 - 2026-01-26
 
 ### Changes
