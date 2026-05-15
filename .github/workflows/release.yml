@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 
     steps:
       - name: Check out repository
@@ -31,13 +30,6 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           echo "ROKU_RELEASE_VERSION=$version" >> "$GITHUB_ENV"
-
-      - name: Check tap token
-        run: |
-          if [ -z "$TAP_TOKEN" ]; then
-            echo "missing HOMEBREW_TAP_TOKEN secret" >&2
-            exit 1
-          fi
 
       - name: Install dependencies
         run: npm ci
@@ -56,6 +48,7 @@ jobs:
 
       - name: Derive package file
         run: |
+          # shellcheck disable=SC2016
           package_file="$(node -p 'const pkg=require("./package.json"); `${pkg.name.replace(/^@/, "").replace(/\//g, "-")}-${process.env.ROKU_RELEASE_VERSION}.tgz`')"
           test -f "dist/release/${package_file}"
           echo "ROKU_PACKAGE_FILE=$package_file" >> "$GITHUB_ENV"
@@ -102,37 +95,3 @@ jobs:
           fi
 
           npm publish "dist/release/${ROKU_PACKAGE_FILE}" --access public
-
-      - name: Check out Homebrew tap
-        uses: actions/checkout@v6
-        with:
-          repository: gumadeiras/homebrew-tap
-          token: ${{ env.TAP_TOKEN }}
-          path: homebrew-tap
-
-      - name: Update Homebrew formula
-        run: |
-          sha256="$(awk -v file="$ROKU_PACKAGE_FILE" '$2 == file { print $1 }' dist/release/SHA256SUMS.txt)"
-          if [ -z "$sha256" ]; then
-            echo "missing checksum for $ROKU_PACKAGE_FILE" >&2
-            exit 1
-          fi
-
-          python homebrew-tap/scripts/update_formula.py \
-            --formula homebrew-tap/Formula/roku-cli.rb \
-            --url "https://github.com/gumadeiras/roku-cli/releases/download/v${ROKU_RELEASE_VERSION}/${ROKU_PACKAGE_FILE}" \
-            --sha256 "$sha256"
-
-      - name: Commit and push formula
-        working-directory: homebrew-tap
-        run: |
-          if git diff --quiet -- Formula/roku-cli.rb; then
-            echo "Formula/roku-cli.rb already up to date"
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Formula/roku-cli.rb
-          git commit -m "Update roku-cli to ${ROKU_RELEASE_VERSION}"
-          git push

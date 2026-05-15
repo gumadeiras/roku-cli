@@ -9,6 +9,7 @@
 
 ### Changes
 
+- Added the final `roku-ts-cli` release notice. Install `@gumadeiras/roku` now.
 - Documented the local release wrapper in the repo agent guide.
 
 ## 1.1.3 - 2026-01-26

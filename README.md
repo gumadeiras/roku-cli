@@ -1,5 +1,8 @@
 # Roku CLI
 
+> This package has been renamed. Install `@gumadeiras/roku` now:
+> `npm install -g @gumadeiras/roku`
+
 Fast TypeScript CLI and library for controlling Roku devices via the ECP API.
 
 ## Highlights
